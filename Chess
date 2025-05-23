@@ -1,0 +1,264 @@
+using System;
+
+namespace ChessGame
+{
+    enum PieceType
+    {
+        Pawn,
+        Knight,
+        Bishop,
+        Rook,
+        Queen,
+        King
+    }
+
+    public class ChessPiece
+    {
+        public int PositionX { get; set; }
+        public int PositionY { get; set; }
+        public bool IsWhite { get; set; }
+        public bool IsAlive { get; set; }
+
+        public ChessPiece(int x, int y, bool isWhite)
+        {
+            PositionX = x;
+            PositionY = y;
+            IsWhite = isWhite;
+            IsAlive = true;
+        }
+
+        public virtual void Move(int x, int y)
+        {
+            PositionX = x;
+            PositionY = y;
+        }
+
+        public virtual bool IsValidMove(int x, int y, ChessPiece[,] board)
+        {
+            if (x != PositionX && y != PositionY)
+                return false;
+
+            int dx = Math.Sign(x - PositionX);
+            int dy = Math.Sign(y - PositionY);
+            int cx = PositionX + dx;
+            int cy = PositionY + dy;
+
+            while (cx != x || cy != y)
+            {
+                if (board[cx, cy] != null)
+                    return false;
+                cx += dx;
+                cy += dy;
+            }
+
+            return board[x, y] == null || board[x, y].IsWhite != this.IsWhite;
+        }
+
+        public void Kill()
+        {
+            IsAlive = false;
+        }
+    }
+
+    public class Pawn : ChessPiece
+    {
+        public Pawn(int x, int y, bool isWhite) : base(x, y, isWhite) { }
+
+        public override bool IsValidMove(int x, int y, ChessPiece[,] board)
+        {
+            int direction = IsWhite ? 1 : -1;
+            return (x == PositionX && y == PositionY + direction);
+        }
+    }
+
+    public class Knight : ChessPiece
+    {
+        public Knight(int x, int y, bool isWhite) : base(x, y, isWhite) { }
+
+        public override bool IsValidMove(int x, int y, ChessPiece[,] board)
+        {
+            return (Math.Abs(x - PositionX) == 2 && Math.Abs(y - PositionY) == 1) ||
+                   (Math.Abs(x - PositionX) == 1 && Math.Abs(y - PositionY) == 2);
+        }
+    }
+
+    public class Bishop : ChessPiece
+    {
+        public Bishop(int x, int y, bool isWhite) : base(x, y, isWhite) { }
+
+        public override bool IsValidMove(int x, int y, ChessPiece[,] board)
+        {
+            if (!base.IsValidMove(x, y, board)) return false;
+            return Math.Abs(x - PositionX) == Math.Abs(y - PositionY);
+        }
+    }
+
+    public class Rook : ChessPiece
+    {
+        public Rook(int x, int y, bool isWhite) : base(x, y, isWhite) { }
+
+        public override bool IsValidMove(int x, int y, ChessPiece[,] board)
+        {
+            if (!base.IsValidMove(x, y, board)) return false;
+            return x == PositionX || y == PositionY;
+        }
+    }
+
+    public class Queen : ChessPiece
+    {
+        public Queen(int x, int y, bool isWhite) : base(x, y, isWhite) { }
+
+        public override bool IsValidMove(int x, int y, ChessPiece[,] board)
+        {
+            if (!base.IsValidMove(x, y, board)) return false;
+            return x == PositionX || y == PositionY || Math.Abs(x - PositionX) == Math.Abs(y - PositionY);
+        }
+    }
+
+    public class King : ChessPiece
+    {
+        public King(int x, int y, bool isWhite) : base(x, y, isWhite) { }
+
+        public override bool IsValidMove(int x, int y, ChessPiece[,] board)
+        {
+            if (!base.IsValidMove(x, y, board)) return false;
+            return Math.Abs(x - PositionX) <= 1 && Math.Abs(y - PositionY) <= 1;
+        }
+    }
+
+    public class ChessBoard
+    {
+        public ChessPiece[,] Board { get; set; }
+
+        public ChessBoard()
+        {
+            Board = new ChessPiece[8, 8];
+            InitializeBoard();
+        }
+
+        private void InitializeBoard()
+        {
+            // Pawns
+            for (int i = 0; i < 8; i++)
+            {
+                Board[i, 1] = new Pawn(i, 1, true);
+                Board[i, 6] = new Pawn(i, 6, false);
+            }
+
+            // Rooks
+            Board[0, 0] = new Rook(0, 0, true);
+            Board[7, 0] = new Rook(7, 0, true);
+            Board[0, 7] = new Rook(0, 7, false);
+            Board[7, 7] = new Rook(7, 7, false);
+
+            // Knights
+            Board[1, 0] = new Knight(1, 0, true);
+            Board[6, 0] = new Knight(6, 0, true);
+            Board[1, 7] = new Knight(1, 7, false);
+            Board[6, 7] = new Knight(6, 7, false);
+
+            // Bishops
+            Board[2, 0] = new Bishop(2, 0, true);
+            Board[5, 0] = new Bishop(5, 0, true);
+            Board[2, 7] = new Bishop(2, 7, false);
+            Board[5, 7] = new Bishop(5, 7, false);
+
+            // Queens
+            Board[3, 0] = new Queen(3, 0, true);
+            Board[3, 7] = new Queen(3, 7, false);
+
+            // Kings
+            Board[4, 0] = new King(4, 0, true);
+            Board[4, 7] = new King(4, 7, false);
+        }
+
+        private void PrintBoard()
+        {
+            for (int i = 7; i >= 0; i--)  
+            {
+                for (int j = 0; j < 8; j++)
+                {
+                    if (Board[j, i] != null)
+                    {
+                        Console.Write(Board[j, i].GetType().Name[0] + " ");
+                    }
+                    else
+                    {
+                        Console.Write(". ");
+                    }
+                }
+                Console.WriteLine();
+            }
+        }
+
+        public void StartGame()
+        {
+           
+            PrintBoard();
+
+            while (true)
+            {
+                Console.WriteLine("Enter your move (e.g., e2 e4) or 'exit': ");
+                string input = Console.ReadLine();
+                if (input == "exit")
+                    break;
+
+                string[] parts = input.Split(' ');
+                if (parts.Length != 2)
+                {
+                    Console.WriteLine("Invalid input. Please enter a valid move.");
+                    continue;
+                }
+
+                string from = parts[0];
+                string to = parts[1];
+                int fromX = from[0] - 'a';
+                int fromY = from[1] - '1';
+                int toX = to[0] - 'a';
+                int toY = to[1] - '1';
+
+                if (fromX < 0 || fromX > 7 || fromY < 0 || fromY > 7 ||
+                    toX < 0 || toX > 7 || toY < 0 || toY > 7)
+                {
+                    Console.WriteLine("Invalid move. Out of bounds.");
+                    continue;
+                }
+
+                ChessPiece piece = Board[fromX, fromY];
+                if (piece == null)
+                {
+                    Console.WriteLine("No piece at the specified position.");
+                    continue;
+                }
+
+                if (!piece.IsValidMove(toX, toY, Board))
+                {
+                    Console.WriteLine("Invalid move for the selected piece.");
+                    continue;
+                }
+
+                ChessPiece target = Board[toX, toY];
+                if (target != null && target.IsWhite != piece.IsWhite)
+                {
+                    target.Kill();
+                    Console.WriteLine($"{target.GetType().Name} captured.");
+                }
+
+                Board[toX, toY] = piece;
+                Board[fromX, fromY] = null;
+                piece.Move(toX, toY);
+                piece.Move(toX, toY);
+                PrintBoard();
+            }
+        }
+    }
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            ChessBoard game = new ChessBoard();
+            game.StartGame();
+        }
+    }
+}

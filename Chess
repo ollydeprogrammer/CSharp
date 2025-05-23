@@ -129,6 +129,7 @@ namespace ChessGame
     public class ChessBoard
     {
         public ChessPiece[,] Board { get; set; }
+        private bool isWhiteTurn = true; // Track whose turn it is
 
         public ChessBoard()
         {
@@ -174,7 +175,7 @@ namespace ChessGame
 
         private void PrintBoard()
         {
-            for (int i = 7; i >= 0; i--)  
+            for (int i = 7; i >= 0; i--)
             {
                 for (int j = 0; j < 8; j++)
                 {
@@ -193,11 +194,11 @@ namespace ChessGame
 
         public void StartGame()
         {
-           
             PrintBoard();
 
             while (true)
             {
+                Console.WriteLine(isWhiteTurn ? "White's move:" : "Black's move:");
                 Console.WriteLine("Enter your move (e.g., e2 e4) or 'exit': ");
                 string input = Console.ReadLine();
                 if (input == "exit")
@@ -231,6 +232,13 @@ namespace ChessGame
                     continue;
                 }
 
+                // Enforce turn order here
+                if (piece.IsWhite != isWhiteTurn)
+                {
+                    Console.WriteLine(isWhiteTurn ? "It's White's turn." : "It's Black's turn.");
+                    continue;
+                }
+
                 if (!piece.IsValidMove(toX, toY, Board))
                 {
                     Console.WriteLine("Invalid move for the selected piece.");
@@ -247,7 +255,10 @@ namespace ChessGame
                 Board[toX, toY] = piece;
                 Board[fromX, fromY] = null;
                 piece.Move(toX, toY);
-                piece.Move(toX, toY);
+
+                // Switch turn after successful move
+                isWhiteTurn = !isWhiteTurn;
+
                 PrintBoard();
             }
         }
